@@ -20,3 +20,7 @@ go run client/main.go
 ## Extra notes
 
 Through the source code you can see that the password is a constant in the server and it doesn't exist on the client, but the client is able to generate it pretty quickly.
+
+## Example run
+
+![screenshot](./screenshot.png)
