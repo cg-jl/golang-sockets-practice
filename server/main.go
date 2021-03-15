@@ -3,20 +3,34 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
 	connHost = "localhost"
 	connPort = "9999"
 	connType = "tcp"
-	myPass   = "0(\\6`\tBfFk"
+	printable  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c"
 )
 
+func generateRandomString(length int) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = printable[rand.Intn(len(printable))]
+	}
+
+	return string(b)
+}
+
+
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	fmt.Println("Starting " + connType + " server on " + connHost + ":" + connPort)
+	password := generateRandomString(6 + rand.Intn(34))
 	l, err := net.Listen(connType, connHost+":"+connPort)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
@@ -35,11 +49,11 @@ func main() {
 
 		fmt.Println("Client " + conn.RemoteAddr().String() + " connected.")
 
-		go handleConnection(conn)
+		go handleConnection(conn, password)
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func handleConnection(conn net.Conn, myPass string) {
 	bw := bufio.NewWriter(conn)
 	br := bufio.NewReader(conn)
 	for {
