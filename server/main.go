@@ -3,8 +3,10 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"context"
 	"math/rand"
 	"net"
+	"syscall"
 	"os"
 	"strings"
 	"time"
@@ -14,8 +16,14 @@ const (
 	connHost = "localhost"
 	connPort = "9999"
 	connType = "tcp"
-	printable  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c"
+	printable  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t"
 )
+
+func reusePort(network, address string, conn syscall.RawConn) error {
+	return conn.Control(func(descriptor uintptr) {
+		syscall.SetsockoptInt(int(descriptor), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+	})
+}
 
 func generateRandomString(length int) string {
 	b := make([]byte, length)
@@ -31,7 +39,15 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	fmt.Println("Starting " + connType + " server on " + connHost + ":" + connPort)
 	password := generateRandomString(6 + rand.Intn(34))
-	l, err := net.Listen(connType, connHost+":"+connPort)
+
+	fmt.Printf("Generated password: \"%s\"\n", password)
+
+
+	config := &net.ListenConfig{Control: reusePort}
+
+
+
+	l, err := config.Listen(context.Background(), "tcp", "localhost:9999")
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
@@ -69,8 +85,8 @@ func handleConnection(conn net.Conn, myPass string) {
 		buffer = buffer[:len(buffer)-1]
 		passwd := string(buffer)
 
-		if len(passwd) < 10 {
-			passwd += strings.Repeat("\x00", 10-len(passwd))
+		if len(passwd) < len(myPass) {
+			passwd += strings.Repeat("\x00", len(myPass)-len(passwd))
 		}
 
 		if passwd == myPass {
