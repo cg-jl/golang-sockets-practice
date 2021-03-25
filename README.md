@@ -19,7 +19,8 @@ go run client/main.go
 
 ## Extra notes
 
-Through the source code you can see that the password is a constant in the server and it doesn't exist on the client, but the client is able to generate it pretty quickly.
+- The password is now generated randomly from the server.
+- The client makes an initial connection to the server to find out the total length of the password. Then it launches the workers.
 
 ## Example run
 

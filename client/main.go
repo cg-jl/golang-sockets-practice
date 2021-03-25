@@ -16,10 +16,46 @@ type WorkData = struct {
 
 const (
 	printable  = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c"
-	wordLength = 10
 )
 
+
+func getWordLength() (int, error) {
+	client, err := net.Dial("tcp", "localhost:9999")
+	if err != nil {
+		panic(err)
+	}
+
+	defer client.Close()
+
+
+	bw := bufio.NewWriter(client)
+	br := bufio.NewReader(client)
+
+	br.ReadString(' ')
+	bw.WriteRune('\n')
+	if err := bw.Flush(); err != nil {
+		return 0, err
+	}
+
+	answer, err := br.ReadString('\n')
+	answer = answer[:len(answer) - 1]
+	if err != nil { return 0, err }
+
+
+
+	return len(answer), nil
+
+
+}
+
 func main() {
+	wordLength, err := getWordLength()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("word length: %d\n", wordLength)
+
+	// init job
 	workPipe := make(chan WorkData)
 	registered := make([]rune, wordLength)
 	for i := 0; i < wordLength; i++ {

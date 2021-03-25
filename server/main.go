@@ -37,10 +37,9 @@ func generateRandomString(length int) string {
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
-	fmt.Println("Starting " + connType + " server on " + connHost + ":" + connPort)
 	password := generateRandomString(6 + rand.Intn(34))
 
-	fmt.Printf("Generated password: \"%s\"\n", password)
+	fmt.Printf("Generated password: %q\n", password)
 
 
 	config := &net.ListenConfig{Control: reusePort}
@@ -48,11 +47,15 @@ func main() {
 
 
 	l, err := config.Listen(context.Background(), "tcp", "localhost:9999")
+
+
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
 	}
 	defer l.Close()
+
+	fmt.Println("Listening on localhost:9999")
 
 	for {
 		// accept next client
@@ -61,10 +64,6 @@ func main() {
 			fmt.Println("Error connecting:", err.Error())
 			return
 		}
-		fmt.Println("Client connected.")
-
-		fmt.Println("Client " + conn.RemoteAddr().String() + " connected.")
-
 		go handleConnection(conn, password)
 	}
 }
@@ -77,7 +76,6 @@ func handleConnection(conn net.Conn, myPass string) {
 		bw.Flush()
 		buffer, err := br.ReadBytes('\n')
 		if err != nil {
-			fmt.Println("Cient left.")
 			conn.Close()
 			return
 		}
